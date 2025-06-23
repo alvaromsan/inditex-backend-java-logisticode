@@ -74,8 +74,9 @@ public class CenterManagementService {
     }
 
     public List<Center> readAllCenters(){
-        // Verify there is no center in the given coordinates
         List<Center> centerList= centerRepository.findAll();
+
+        // Verify the list is not empty
         if (centerList.isEmpty()) {
             throw new RuntimeException("There is no logistics center registered at this time");
         }
