@@ -1,5 +1,7 @@
 package com.hackathon.inditex.Controllers;
 
+import com.hackathon.inditex.DTO.AssignationResponse;
+import com.hackathon.inditex.DTO.OrderAssignation;
 import com.hackathon.inditex.DTO.OrderRequest;
 import com.hackathon.inditex.DTO.OrderResponse;
 import com.hackathon.inditex.Entities.Order;
@@ -25,9 +27,15 @@ public class OrderManagementController {
     }
 
     @GetMapping
-    public  ResponseEntity<?> listAllOrders() {
+    public ResponseEntity<?> listAllOrders() {
         List<Order> orderList = orderManagementService.readAllOrders();
         return ResponseEntity.ok(orderList);
+    }
+
+    @PostMapping("order-assignations")
+    public ResponseEntity<?> centerAssignment() {
+        AssignationResponse assignationResponse = orderManagementService.orderAssignation();
+        return ResponseEntity.ok(assignationResponse);
     }
 
 }
