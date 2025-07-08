@@ -13,6 +13,22 @@ services:
       - inditex_network
     restart: always
 
+  test-runner:
+    image: maven:3.9.6-eclipse-temurin-21
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inditex_test
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_PROFILES_ACTIVE: test
+    command: mvn test -e
+    networks:
+      - inditex_network
+
   mysql:
     image: mysql:8.0
     environment:
@@ -24,6 +40,8 @@ services:
     networks:
       - inditex_network
     restart: always
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
 
 networks:
   inditex_network:
