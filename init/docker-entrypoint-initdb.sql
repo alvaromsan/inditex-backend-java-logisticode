@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS inditex_test;
+CREATE DATABASE inditex_test;
