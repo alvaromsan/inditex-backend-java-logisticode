@@ -115,7 +115,7 @@ public class CenterManagementService {
     //  Validates:
     //  1) Center status is valid --> 400 BAD REQUEST
     //  2) Center capacity is valid --> 400 BAD REQUEST
-    //  3) Given coordinates don't belong to an already registered center --> 500 INTERNAL SERVER ERROR
+    //  3) Given coordinates belong to an already registered center --> 500 INTERNAL SERVER ERROR
     //  4) currentLoad doesn't exceed maxCapacity --> 500 INTERNAL SERVER ERROR
     private void copyCenterRequestToCenter(CenterRequest centerRequest, Center updatedCenter) {
         if (centerRequest == null || updatedCenter == null) return;
