@@ -292,7 +292,6 @@ public class OrderManagementService {
      * - coordinates (latitude and longitude) are not null
      *
      * Throws a 400 Bad Request ResponseStatusException if any check fails.
-     * 
      * @param orderRequest the order request to validate
      */
     private void validateOrderRequest(OrderRequest orderRequest) {
