@@ -18,7 +18,7 @@ import java.util.List;
 @RequestMapping("/api/centers")
 public class CenterManagementController {
 
-    // Autowiring the centerManagementService bean from the ApplicationContext
+    // Autowiring the CenterManagementService bean from the ApplicationContext
     @Autowired
     private CenterManagementService centerManagementService;
 
