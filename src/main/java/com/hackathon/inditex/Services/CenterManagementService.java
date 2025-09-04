@@ -12,24 +12,38 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Service class responsible for managing logistics centers.
+ *
+ * Contains business logic for operations such as creating, updating,
+ * reading and deleting centers.
+ */
 @Service
 public class CenterManagementService {
+
+    // Autowiring the CenterRepository bean from the ApplicationContext
     @Autowired
     private CenterRepository centerRepository;
 
+    // Valid values for the Center#capacity attribute
     private static final Set<String> VALID_CAPACITIES = Set.of(
             "B", "M", "S", "BM", "BS", "MS", "BMS"
     );
 
+    // Valid values for the Center#status attribute
     private static final Set<String> VALID_STATUS = Set.of(
             "AVAILABLE", "OCCUPIED"
     );
 
-    //  Validates:
-    //  1) Center status is valid --> 400 BAD REQUEST
-    //  2) Center capacity is valid --> 400 BAD REQUEST
-    //  3) Given coordinates don't belong to an already registered center --> 500 INTERNAL SERVER ERROR
-    //  4) currentLoad doesn't exceed maxCapacity --> 500 INTERNAL SERVER ERROR
+    /**
+     * Creates a new logistics center based on the provided centerRequest.
+     *
+     * @param centerRequest the payload containing center details
+     * @return success message when the center is created successfully
+     * @throws ResponseStatusException if the center status or capacity is invalid (400 Bad Request)
+     * @throws RuntimeException if a center already exist in the given coordinates
+     * or the currentLoad exceeds maxCapacity (500 Internal Server Error)
+     */
     public String createNewCenter(CenterRequest centerRequest){
         Double lat = centerRequest.getCoordinates().getLatitude();
         Double lon = centerRequest.getCoordinates().getLongitude();
@@ -73,6 +87,12 @@ public class CenterManagementService {
         return "Logistics center created successfully.";
     }
 
+    /**
+     * Retrieves all registered logistics centers.
+     *
+     * @return a list with all currently registered logistics centers
+     * @throws RuntimeException if no centers are registered
+     */
     public List<Center> readAllCenters(){
         List<Center> centerList= centerRepository.findAll();
 
@@ -85,6 +105,17 @@ public class CenterManagementService {
         return centerList;
     }
 
+    /**
+     * Updates an existing logistics center with the provided centerRequest data.
+     *
+     * @param id the ID of the center to update
+     * @param centerRequest the payload containing updated center details
+     * @return success message when the center is updated successfully
+     * @throws ResponseStatusException if the center with the given ID is not found (404 NOT FOUND)
+     * @throws ResponseStatusException if the center status or capacity is invalid (400 BAD REQUEST)
+     * @throws RuntimeException if the new coordinates are already occupied by an existing center
+     * or currentLoad exceeds maxCapacity (500 INTERNAL SERVER ERROR)
+     */
     public String updateCenter(Long id, CenterRequest centerRequest) {
 
         // Object where changes will be applied
@@ -99,6 +130,16 @@ public class CenterManagementService {
         return "Logistics center updated successfully.";
     }
 
+    //  Validates:
+    //  - The given ID center exists --> 404 NOT FOUND
+
+    /**
+     * Deletes an existing logistics center with the provided id.
+     *
+     * @param id the ID of the center to delete
+     * @return successful message when the center is deleted
+     * @throws ResponseStatusException if the center with the given ID is not found (404 NOT FOUND)
+     */
     public String deleteCenter(Long id) {
         // Object that will be deleted
         Center center = centerRepository.findById(id)
@@ -111,12 +152,15 @@ public class CenterManagementService {
     }
 
 
-    //  Method that copies the values from the request into a Center-type Object
-    //  Validates:
-    //  1) Center status is valid --> 400 BAD REQUEST
-    //  2) Center capacity is valid --> 400 BAD REQUEST
-    //  3) Given coordinates don't belong to an already registered center --> 500 INTERNAL SERVER ERROR
-    //  4) currentLoad doesn't exceed maxCapacity --> 500 INTERNAL SERVER ERROR
+    /**
+     * Copies non-null fields from the given CenterRequest to the target Center.
+     * Performs validation on capacity, status, currentLoad, and coordinates.
+     *
+     * @param centerRequest the source with updated values
+     * @param updatedCenter the target center to be updated
+     * @throws ResponseStatusException if capacity or status is invalid (400 BAD REQUEST)
+     * @throws RuntimeException if currentLoad exceeds maxCapacity or coordinates already exist (500 INTERNAL SERVER ERROR)
+     */
     private void copyCenterRequestToCenter(CenterRequest centerRequest, Center updatedCenter) {
         if (centerRequest == null || updatedCenter == null) return;
 
@@ -151,41 +195,50 @@ public class CenterManagementService {
         }
 
 
-        // Handle coordinates
+        // Handle coordinates - verify if the coordinates have been modified
+        Coordinates newCoords = centerRequest.getCoordinates();
+        Coordinates currentCoords = updatedCenter.getCoordinates();
         boolean hasCoordinatesChanged = false;
-        if (centerRequest.getCoordinates() != null) {
-            Coordinates sourceCoords = centerRequest.getCoordinates();
-            Coordinates targetCoords = updatedCenter.getCoordinates();
-            if (sourceCoords.getLatitude() != null &&
-                    !sourceCoords.getLatitude().equals(targetCoords.getLatitude())) {
-                targetCoords.setLatitude(sourceCoords.getLatitude());
+
+        if (newCoords != null) {
+            if (newCoords.getLatitude() != null && !newCoords.getLatitude().equals(currentCoords.getLatitude())) {
+                currentCoords.setLatitude(newCoords.getLatitude());
                 hasCoordinatesChanged = true;
             }
-            if (sourceCoords.getLongitude() != null &&
-                    !sourceCoords.getLongitude().equals(targetCoords.getLongitude())) {
-                targetCoords.setLongitude(sourceCoords.getLongitude());
+            if (newCoords.getLongitude() != null && !newCoords.getLongitude().equals(currentCoords.getLongitude())) {
+                currentCoords.setLongitude(newCoords.getLongitude());
                 hasCoordinatesChanged = true;
             }
         }
 
-        // Verify the new location doesn't already exist
-        if(hasCoordinatesChanged) {
-            Double latitude = updatedCenter.getCoordinates().getLatitude();
-            Double longitude = updatedCenter.getCoordinates().getLongitude();
-            boolean exists = centerRepository.existsByCoordinatesLatitudeAndCoordinatesLongitude(latitude, longitude);
+        // If they have, check the news coordinates don't overlap with an existing center
+        if (hasCoordinatesChanged) {
+            boolean exists = centerRepository.existsByCoordinatesLatitudeAndCoordinatesLongitude(
+                    currentCoords.getLatitude(), currentCoords.getLongitude()
+            );
             if (exists) {
                 throw new RuntimeException("There is already a logistics center in that position.");
             }
         }
     }
 
-    // Checks the given Center capacity is valid
-    public boolean isValidCapacity(String capacity) {
+    /**
+     * Checks whether the given Center capacity is valid.
+     *
+     * @param capacity the capacity value to validate
+     * @return true if the capacity is non-null and one of the allowed values; false otherwise
+     */
+    private boolean isValidCapacity(String capacity) {
         return capacity != null && VALID_CAPACITIES.contains(capacity);
     }
 
-    // Checks the given center Center status is valid
-    public boolean isValidStatus(String status) {
+    /**
+     * Checks whether the given Center status is valid.
+     *
+     * @param status the status value to validate
+     * @return true if the status is non-null and one of the allowed values; false otherwise
+     */
+    private boolean isValidStatus(String status) {
         return status != null && VALID_STATUS.contains(status);
     }
 }

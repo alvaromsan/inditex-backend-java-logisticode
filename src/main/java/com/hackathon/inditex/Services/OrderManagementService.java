@@ -16,24 +16,42 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
+/**
+ * Service class responsible for managing orders.
+ *
+ * Contains business logic for operations such as creating, reading
+ * and assigning orders.
+ */
 @Service
 public class OrderManagementService {
 
+    // Autowiring the OrderRepository bean from the ApplicationContext
     @Autowired
     private OrderRepository orderRepository;
 
+    // Autowiring the CenterRepository bean from the ApplicationContext
     @Autowired
     private CenterRepository centerRepository;
 
+    // Valid values for the Order#size attribute
     private static final Set<String> VALID_SIZES = Set.of(
             "B", "M", "S"
     );
 
+    // Initial creation value for the Order#status attribute
     private static final String INITIAL_ORDER_STATUS = "PENDING";
 
+    /**
+     * Creates a new order based on the provided orderRequest.
+     *
+     * @param orderRequest the payload containing order details
+     * @return {@link OrderResponse} containing the created order’s details along with a success message
+     * @throws ResponseStatusException if the request is invalid: missing customerId, invalid size, or missing coordinates
+     */
     public OrderResponse createNewOrder(OrderRequest orderRequest) {
         final String SUCCESS_MESSAGE = "Order created successfully in PENDING status.";
 
+        // validates if request is invalid: missing customerId, invalid size, or missing coordinates
         validateOrderRequest(orderRequest);
 
         Order newOrder = new Order();
@@ -56,6 +74,12 @@ public class OrderManagementService {
         );
     }
 
+    /**
+     * Retrieves all registered orders.
+     *
+     * @return a list of all currently registered orders
+     * @throws RuntimeException if no orders are registered in the system
+     */
     public List<Order> readAllOrders(){
         List<Order> orderList= orderRepository.findAll();
 
@@ -68,6 +92,12 @@ public class OrderManagementService {
         return orderList;
     }
 
+    /**
+     * Assigns all orders with "PENDING" status to available logistics centers.
+     *
+     * @return an {@link AssignationResponse} containing the list of order assignments
+     * @throws RuntimeException if there are no pending orders or no available logistics centers
+     */
     public AssignationResponse orderAssignation() {
         // List of order assignments
         List<OrderAssignation> orderAssignations = new ArrayList<>();
@@ -92,14 +122,24 @@ public class OrderManagementService {
     }
 
 
-    // Check:
-    // 1) All centers that "allow" the order size
-    // 2) All centers whose currentLoad < maxCapacity
-    // 3) Closer center from the given order
-    // Once a center is found:
-    // 1) Update center load (+1)
-    // 2) Update order status ("ASSIGNED") and assignedCenter
-    public void processPendingOrder(Order order, List<Center> centerList, List<OrderAssignation> orderAssignations) {
+    /**
+     * Processes a single pending order by finding a suitable logistics center.
+     *
+     * The method performs the following steps:
+     * 1. Filters all centers that support the order's size.
+     * 2. Filters centers whose current load is below their maximum capacity.
+     * 3. Finds the closest center to the order's coordinates.
+     * 4. (if a center is found)Updates the center's current load and the order's status and assigned center.
+     * 5. Records the result in the provided orderAssignations list.
+     *
+     * If no suitable center is found, an OrderAssignation is still created with a message
+     * explaining why the order could not be assigned.
+     *
+     * @param order the pending order to be assigned
+     * @param centerList the list of centers to consider for assignment; center load will be updated here
+     * @param orderAssignations the list where the assignment result will be added
+     */
+    private void processPendingOrder(Order order, List<Center> centerList, List<OrderAssignation> orderAssignations) {
         // Map that will store all the centers which support the capacity + its distance to current order
         Map<Center, Double> centerDistances = new HashMap<>();
 
@@ -195,7 +235,17 @@ public class OrderManagementService {
         }
     }
 
-    public double calculateDistance(double startLat, double startLong, double endLat, double endLong) {
+    /**
+     * Calculates the great-circle distance between two geographic points using the Haversine formula.
+     * Used to calculate the distance between order-center
+     *
+     * @param startLat the latitude of the starting point in decimal degrees
+     * @param startLong the longitude of the starting point in decimal degrees
+     * @param endLat the latitude of the ending point in decimal degrees
+     * @param endLong the longitude of the ending point in decimal degrees
+     * @return the distance between the two points in kilometers
+     */
+    private double calculateDistance(double startLat, double startLong, double endLat, double endLong) {
         final int EARTH_RADIUS = 6371; // Radius of the Earth in kilometers
 
         double dLat = Math.toRadians((endLat - startLat));
@@ -210,21 +260,42 @@ public class OrderManagementService {
         return EARTH_RADIUS * c;
     }
 
-    double haversine(double val) {
+    /**
+     * Calculates the haversine of an angle.
+     *
+     * This is a helper method used in the Haversine formula for computing distances between two points on a sphere.
+     *
+     * @param val the angle in radians
+     * @return the haversine of the given angle
+     */
+    private double haversine(double val) {
         return Math.pow(Math.sin(val / 2), 2);
     }
 
 
-    // Checks the given Center capacity is valid
-    public boolean isValidSize(String size) {
+    /**
+     * Checks if the given order size is valid.
+     *
+     * @param size the size to check
+     * @return {@code true} if the size is non-null and contained in {@link #VALID_SIZES}, {@code false} otherwise
+     */
+    private boolean isValidSize(String size) {
         return size != null && VALID_SIZES.contains(size);
     }
 
-    // Function that verifies 3 checks:
-    // 1) customerId field is not empty
-    // 2) size field is valid ("B", "M", "S")
-    // 3) coordinates field is not empty
-    public void validateOrderRequest(OrderRequest orderRequest) {
+    /**
+     * Validates the given OrderRequest.
+     *
+     * Validates:
+     * - customerId is not null
+     * - size is valid ("B", "M", "S")
+     * - coordinates (latitude and longitude) are not null
+     *
+     * Throws a 400 Bad Request ResponseStatusException if any check fails.
+     * 
+     * @param orderRequest the order request to validate
+     */
+    private void validateOrderRequest(OrderRequest orderRequest) {
         // Verify customerId is not empty
         if (orderRequest.getCustomerId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Empty customerId value");
