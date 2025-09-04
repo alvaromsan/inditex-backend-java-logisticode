@@ -60,7 +60,7 @@ public class OrderManagementController {
      * * - If there are no orders with "PENDING" status → 500 Internal Server Error
      * * - If there are no available logistics center → 500 Internal Server Error
      *
-     * @return 200 Ok with the list of the assigned orders with their corresponding
+     * @return 200 Ok with the list of the processed orders with their corresponding
      * assigned logistics center
      */
     @PostMapping("order-assignations")
