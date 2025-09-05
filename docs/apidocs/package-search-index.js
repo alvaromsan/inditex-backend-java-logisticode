@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.hackathon.inditex"},{"l":"com.hackathon.inditex.Controllers"},{"l":"com.hackathon.inditex.DTO"},{"l":"com.hackathon.inditex.Entities"},{"l":"com.hackathon.inditex.Repositories"},{"l":"com.hackathon.inditex.Services"}];updateSearchResults();

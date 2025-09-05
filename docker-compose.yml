@@ -25,7 +25,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_PROFILES_ACTIVE: test
-    command: mvn test -e  # Command to run Maven tests with error output
+    #command: mvn test -e  # Command to run Maven tests with error output
     networks:
       - inditex_network  # Connects test-runner to the same network
 

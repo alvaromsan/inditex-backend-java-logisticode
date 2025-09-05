@@ -1,0 +1,6 @@
+com.hackathon.inditex
+com.hackathon.inditex.Controllers
+com.hackathon.inditex.DTO
+com.hackathon.inditex.Entities
+com.hackathon.inditex.Repositories
+com.hackathon.inditex.Services
