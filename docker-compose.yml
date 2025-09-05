@@ -1,48 +1,48 @@
-version: '3.8'
+version: '3.8' # Specifies the Compose file format version. 3.8 is compatible with newer Docker features.
 
 services:
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: .    # Docker build context is the current directory
+      dockerfile: Dockerfile  # Explicitly specifies the Dockerfile to use
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Maps container port 3000 to host port 3000
     depends_on:
-      - mysql
+      - mysql   # Ensures the MySQL service starts before app
     networks:
-      - inditex_network
-    restart: always
+      - inditex_network  # Connects the app to a custom bridge network
+    restart: always  # Ensures container restarts automatically on failure or Docker restart
 
   test-runner:
-    image: maven:3.9.6-eclipse-temurin-21
-    working_dir: /app
+    image: maven:3.9.6-eclipse-temurin-21  # Uses a Maven + OpenJDK image for running tests
+    working_dir: /app   # Sets working directory inside the container
     volumes:
-      - ./:/app
+      - ./:/app  # Mounts the project directory for code access inside container
     depends_on:
-      - mysql
-    environment:
+      - mysql   # Ensures MySQL starts before tests
+    environment:  # Sets environment variables for Spring Boot
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inditex_test
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_PROFILES_ACTIVE: test
-    command: mvn test -e
+    command: mvn test -e  # Command to run Maven tests with error output
     networks:
-      - inditex_network
+      - inditex_network  # Connects test-runner to the same network
 
   mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: inditex             
-      MYSQL_PASSWORD: root                   
-      MYSQL_ROOT_PASSWORD: root              
+    image: mysql:8.0  # Uses official MySQL 8 image
+    environment:  # Configures database credentials
+      MYSQL_DATABASE: inditex  # Default database name
+      MYSQL_PASSWORD: root  # Password for non-root users (if any)
+      MYSQL_ROOT_PASSWORD: root # Root password
     ports:
-      - "3306:3306"                          
+      - "3306:3306"  # Maps MySQL port to host for local access
     networks:
-      - inditex_network
-    restart: always
+      - inditex_network   # Connects MySQL to custom network
+    restart: always  # Auto-restarts on failure
     volumes:
-      - ./init:/docker-entrypoint-initdb.d
+      - ./init:/docker-entrypoint-initdb.d  # Mounts SQL scripts for initial DB setup
 
 networks:
   inditex_network:
-    driver: bridge
+    driver: bridge   # Creates a user-defined bridge network for inter-service communication
