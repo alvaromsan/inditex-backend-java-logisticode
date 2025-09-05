@@ -18,6 +18,17 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+
+/**
+ * Integration tests for the Inditex application.
+ * <p>
+ * This class uses Spring Boot's testing support to start a real web environment
+ * on a random port. It also uses a test-specific profile ("test") and resets
+ * the database before each test method to ensure isolation.
+ * <p>
+ * The {@link PatchSupportConfig} is imported to provide a {@link org.springframework.web.client.RestTemplate}
+ * capable of sending PATCH requests.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 // Import this bean to allow PATCH method in the restTemplate
@@ -26,17 +37,27 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @Sql(scripts = "/sql/reset-db.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class InditexApplicationTests {
 
+	/** Injects the random port number the server is running on during tests. */
 	@LocalServerPort
 	private int port;
 
+	/** RestTemplate for sending HTTP requests to the test server. */
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-	// 1) CENTER MANAGEMENT
+	// ========================================================
+	// 1) CENTER MANAGEMENT TESTS
+	// ========================================================
 
 	// 1.1) CREATE A CENTER
 
-	// WITH INVALID CAPACITY ("S", "M", "B")
+	/**
+	 * Test creating a Center with an invalid capacity.
+	 * <p>
+	 * This test verifies that sending a POST request with an invalid capacity value
+	 * (e.g., "P" instead of allowed values "S", "M", "B") results in a 400 Bad Request
+	 * response. It also checks that the response body contains an appropriate error message.
+	 */
 	@Test
 	void createCenterInvalidCapacity() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -57,7 +78,13 @@ class InditexApplicationTests {
 		assertThat(response.getBody()).contains("Invalid capacity value");
 	}
 
-	// WITH INVALID STATUS ("AVAILABLE", "OCCUPIED")
+	/**
+	 * Test creating a Center with an invalid status value.
+	 * <p>
+	 * Allowed status values are "AVAILABLE" and "OCCUPIED".
+	 * This test sends a POST request with an invalid status ("STALE") and verifies
+	 * that the server responds with 400 Bad Request and an appropriate error message.
+	 */
 	@Test
 	void createCenterInvalidStatus() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -78,7 +105,12 @@ class InditexApplicationTests {
 		assertThat(response.getBody()).contains("Invalid status value");
 	}
 
-	// WITH INVALID LOAD (currentLoad > maxCapacity)
+	/**
+	 * Test creating a Center with a current load greater than max capacity.
+	 * <p>
+	 * Sending a POST request where currentLoad > maxCapacity should result in
+	 * an INTERNAL_SERVER_ERROR response and a descriptive error message.
+	 */
 	@Test
 	void createCenterInvalidLoad() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -99,7 +131,13 @@ class InditexApplicationTests {
 		assertThat(response.getBody()).contains("Current load cannot exceed max capacity.");
 	}
 
-	// ALREADY EXISTING (same coordinates)
+	/**
+	 * Test creating a Center that already exists at the same coordinates.
+	 * <p>
+	 * The first POST request should succeed and create the center.
+	 * A second identical POST request should fail with INTERNAL_SERVER_ERROR,
+	 * because a center already exists at those coordinates.
+	 */
 	@Test
 	void createCenterExists() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -127,7 +165,12 @@ class InditexApplicationTests {
 		assertThat(response2.getBody()).contains("There is already a logistics center in that position.");
 	}
 
-	// VALID CENTER IS CREATED
+	/**
+	 * Test creating a valid Center.
+	 * <p>
+	 * Sends a POST request with all valid fields. Expects the server to
+	 * respond with CREATED status and a success message.
+	 */
 	@Test
 	void createCenterCreated() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -150,7 +193,18 @@ class InditexApplicationTests {
 
 	// 1.2) READ ALL CENTERS
 
-	// LISTING ALL EXPECTED CENTERS
+	/**
+	 * Test listing all centers when at least one center exists.
+	 * <p>
+	 * This test first creates a new center using a POST request. Then, it sends
+	 * a GET request to retrieve all centers. It verifies that:
+	 * <ul>
+	 *     <li>The POST request succeeds with status CREATED.</li>
+	 *     <li>The GET request succeeds with status OK.</li>
+	 *     <li>The returned list of centers is not null and contains at least one element.</li>
+	 *     <li>The first center's name matches the one that was created.</li>
+	 * </ul>
+	 */
 	@Test
 	void listCentersOk() {
 		String url = "http://localhost:" + port + "/api/centers";
@@ -189,7 +243,13 @@ class InditexApplicationTests {
 		assertThat(centers.getFirst().getName()).isEqualTo("Spain Center");
 	}
 
-	// LISTING NO CENTERS WHEN EMPTY
+	/**
+	 * Test listing centers when no centers exist.
+	 * <p>
+	 * This test sends a GET request to retrieve centers from an empty database.
+	 * It verifies that the server responds with INTERNAL_SERVER_ERROR and a
+	 * descriptive message indicating that no centers are registered.
+	 */
 	@Test
 	void listNoCentersWhenEmpty() {
 		String url = "http://localhost:" + port + "/api/centers";;
@@ -206,7 +266,12 @@ class InditexApplicationTests {
 
 	// 1.3) UPDATE A CENTER
 
-	// WITH INVALID CAPACITY ("S", "M", "B")
+	/**
+	 * Test updating a center with an invalid capacity.
+	 * <p>
+	 * Attempts to set a capacity value that is not allowed ("P"). Expects
+	 * a BAD_REQUEST status with an appropriate error message.
+	 */
 	@Test
 	void updateCenterInvalidCapacity() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -255,7 +320,12 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("Invalid capacity value");
 	}
 
-	// WITH INVALID STATUS ("AVAILABLE", "OCCUPIED")
+	/**
+	 * Test updating a center with an invalid status.
+	 * <p>
+	 * Attempts to set a status value that is not allowed ("STALE"). Expects
+	 * a BAD_REQUEST status with an appropriate error message.
+	 */
 	@Test
 	void updateCenterInvalidStatus() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -304,7 +374,11 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("Invalid status value");
 	}
 
-	// WITH INVALID LOAD (currentLoad > maxCapacity)
+	/**
+	 * Test updating a center where current load exceeds max capacity.
+	 * <p>
+	 * Expects an INTERNAL_SERVER_ERROR with an appropriate error message.
+	 */
 	@Test
 	void updateCenterInvalidLoad() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -354,7 +428,11 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("Current load cannot exceed max capacity.");
 	}
 
-	// CENTER NOT FOUND
+	/**
+	 * Test updating a center that does not exist.
+	 * <p>
+	 * Expects a NOT_FOUND status with a "Center not found" message.
+	 */
 	@Test
 	void updateCenterNotFound() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -403,7 +481,11 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("Center not found.");
 	}
 
-	// CENTER ALREADY REGISTERED IN GIVEN COORDINATES
+	/**
+	 * Test updating a center to coordinates that are already taken by another center.
+	 * <p>
+	 * Expects an INTERNAL_SERVER_ERROR with an appropriate message.
+	 */
 	@Test
 	void updateCenterCoordinatesTaken() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -459,7 +541,11 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("There is already a logistics center in that position.");
 	}
 
-	// VALID CENTER IS UPDATED
+	/**
+	 * Test successfully updating a valid center.
+	 * <p>
+	 * Expects an OK status and confirmation message.
+	 */
 	@Test
 	void updateCenterOk() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -510,7 +596,17 @@ class InditexApplicationTests {
 
 	// 1.4) DELETE A CENTER
 
-	// CENTER DOESN'T EXIST
+	/**
+	 * Test case for attempting to delete a logistics center that does not exist.
+	 * <p>
+	 * Steps:
+	 * <ol>
+	 *     <li>Create a new center via POST request.</li>
+	 *     <li>Retrieve the list of centers and get the ID of the created center.</li>
+	 *     <li>Attempt to delete a center using a non-existing ID (ID + 1).</li>
+	 *     <li>Verify that the response returns HTTP 404 NOT FOUND with the appropriate error message.</li>
+	 * </ol>
+	 */
 	@Test
 	void deleteCenterNotExist() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
@@ -556,7 +652,17 @@ class InditexApplicationTests {
 		assertThat(responseUpdate.getBody()).contains("Center not found.");
 	}
 
-	// SUCCESSFUL DELETION
+	/**
+	 * Test case for successfully deleting an existing logistics center.
+	 * <p>
+	 * Steps:
+	 * <ol>
+	 *     <li>Create a new center via POST request.</li>
+	 *     <li>Retrieve the list of centers and get the ID of the created center.</li>
+	 *     <li>Send a DELETE request using the correct center ID.</li>
+	 *     <li>Verify that the response returns HTTP 200 OK with a success message.</li>
+	 * </ol>
+	 */
 	@Test
 	void deleteCenterOk() {
 		String urlCreate = "http://localhost:" + port + "/api/centers";
