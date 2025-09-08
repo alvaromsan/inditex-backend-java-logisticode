@@ -1,11 +1,16 @@
 package com.hackathon.inditex.Controllers;
 
-import com.hackathon.inditex.DTO.AssignationResponse;
-import com.hackathon.inditex.DTO.OrderAssignation;
-import com.hackathon.inditex.DTO.OrderRequest;
-import com.hackathon.inditex.DTO.OrderResponse;
+import com.hackathon.inditex.DTO.*;
+import com.hackathon.inditex.Entities.Center;
 import com.hackathon.inditex.Entities.Order;
 import com.hackathon.inditex.Services.OrderManagementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,8 @@ import java.util.List;
  * Defines endpoints for Create and Read operations on the Order entity
  * and Order-Assignment to an existing Center.
  */
+
+@Tag(name="Order Endpoints", description = "Endpoints for managing orders")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderManagementController {
@@ -26,43 +33,56 @@ public class OrderManagementController {
     @Autowired
     private OrderManagementService orderManagementService;
 
-    /**
-     * Endpoint to create a new Order.
-     *
-     * @param orderRequest request payload with order details
-     * @return 201 Created with the created Order details + confirmation message
-     */
+    @Operation(
+            summary = "Register a new order",
+            description = "Creates a order with the given payload data"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Order created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Missing id or coordinates or invalid size", content = @Content)
+    })
     @PostMapping
-    public ResponseEntity<?> createNewOrder(@RequestBody OrderRequest orderRequest){
+    public ResponseEntity<?> createNewOrder(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = OrderRequest.class,
+                                    description = "Payload containing order details"
+                            )
+                    )
+            )
+            @org.springframework.web.bind.annotation.RequestBody OrderRequest orderRequest){
         OrderResponse orderResponse = orderManagementService.createNewOrder(orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
     }
 
-    /**
-     * Endpoint to read/list all the registered Orders.
-     *
-     * * Validations:
-     * * - If there are no registered orders → 500 Internal Server Error
-     *
-     * @return 200 Ok with the list of currently registered orders
-     */
+
+    @Operation(
+            summary = "Read all the registered orders",
+            description = "Returns all registered orders at the time of the request"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Existing orders successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Order.class)))),
+            @ApiResponse(responseCode = "500", description = "Server error: No existing orders to be read", content = @Content)
+    })
     @GetMapping
     public ResponseEntity<?> listAllOrders() {
         List<Order> orderList = orderManagementService.readAllOrders();
         return ResponseEntity.ok(orderList);
     }
 
-    /**
-     * Endpoint to assign all the Orders with "PENDING" status to an
-     * available logistics Center.
-     *
-     * * Validations:
-     * * - If there are no orders with "PENDING" status → 500 Internal Server Error
-     * * - If there are no available logistics center → 500 Internal Server Error
-     *
-     * @return 200 Ok with the list of the processed orders with their corresponding
-     * assigned logistics center
-     */
+    @Operation(
+            summary = "Assign the 'PENDING' orders",
+            description = "Assign all the orders with 'PENDING' status to an available logistics Center"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Orders assigned successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AssignationResponse.class))),
+            @ApiResponse(responseCode = "500", description = "No 'PENDING' orders or available logistics centers", content = @Content)
+    })
     @PostMapping("order-assignations")
     public ResponseEntity<?> centerAssignment() {
         AssignationResponse assignationResponse = orderManagementService.orderAssignation();
