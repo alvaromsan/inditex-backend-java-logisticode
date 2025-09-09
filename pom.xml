@@ -45,6 +45,12 @@
 			<artifactId>spring-boot-starter-data-jdbc</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.6.0</version>
+		</dependency>
+
 		<!-- Spring Data JPA (Hibernate) for ORM-based persistence -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
