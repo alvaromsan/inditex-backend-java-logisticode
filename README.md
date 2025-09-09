@@ -129,7 +129,7 @@ docker-compose --profile tests run --rm test-runner
 
 ---
 
-## 🗂️ Documentation
+## 📓 Documentation
 
 - [API Javadoc](docs/apidocs/index.html)
 - [CURL commands - simple example](docs/commands.md)
