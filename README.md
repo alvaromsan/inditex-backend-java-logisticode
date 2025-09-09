@@ -6,15 +6,15 @@ A Spring Boot backend project running in Docker containers, with PostgreSQL data
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Setup & Installation (local)](#setup--installation-local)
-3. [Setup (remote)](#setup-remote)
-4. [API Documentation (Swagger / OpenAPI)](#api-documentation-swagger--openapi)
-5. [Running Tests (local)](#running-tests-local)
+1. [Project Overview](#-project-overview)
+2. [Setup & Installation (local)](#-setup--installation-local)
+3. [Setup (remote)](#-setup-remote)
+4. [API Documentation (Swagger / OpenAPI)](#-api-documentation-swagger--openapi)
+5. [Running Tests (local)](#-running-tests-local)
 
 ---
 
-## Project Overview
+## 📝 Project Overview
 
 This project provides backend services for the Inditex logistics system, implemented in **Java Spring Boot** and running in Docker containers:
 
@@ -64,7 +64,7 @@ springdoc.swagger-ui.disable-swagger-default-url=true
 
 ---
 
-## Setup & Installation (local)
+## 💻 Setup & Installation (local)
 
 ### Prerequisites
 
@@ -94,7 +94,7 @@ docker-compose down
 
 ---
 
-## Setup (remote)
+## ☁️ Setup (remote)
 
 The application is already deployed in remote using `Render` software. To access the application (note it might take some minutes to start the application as it is deployed on demand):
 - `Health check endpoint`: https://inditex.onrender.com/health
@@ -102,7 +102,7 @@ The application is already deployed in remote using `Render` software. To access
 
 ---
 
-## API Documentation (Swagger / OpenAPI)
+## 📚 API Documentation (Swagger / OpenAPI)
 
 This project uses **Springdoc OpenAPI** to generate Swagger API documentation.
 
@@ -118,7 +118,7 @@ This project uses **Springdoc OpenAPI** to generate Swagger API documentation.
 
 ---
 
-## Running Tests (local)
+## 🧪 Running Tests (local)
 
 This project uses a separate `test-runner` service in Docker Compose to run Maven tests. We use **Docker Compose profiles** to separate test execution from the main app startup.
 
@@ -128,7 +128,7 @@ docker-compose --profile tests run --rm test-runner
 
 ---
 
-## Documentation
+## 🗂️ Documentation
 
 - [API Javadoc](docs/apidocs/index.html)
 - [CURL commands - simple example](docs/commands.md)
