@@ -11,6 +11,7 @@ A Spring Boot backend project running in Docker containers, with PostgreSQL data
 3. [Setup (remote)](#-setup-remote)
 4. [API Documentation (Swagger / OpenAPI)](#-api-documentation-swagger--openapi)
 5. [Running Tests (local)](#-running-tests-local)
+6. [Documentation](#-documentation)
 
 ---
 
